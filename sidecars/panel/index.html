@@ -15,11 +15,18 @@
           <circle cx="12" cy="12" r="10"></circle>
           <path d="M12 6v6l4 2"></path>
         </svg>
-        <span>Token & 上下文监控</span>
+        <span>Token & 上下文全景监控</span>
       </div>
       <div class="header-actions">
+        <!-- Model preset selector -->
+        <select id="model-select" class="select-sm" title="切换计费基准模型">
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+        </select>
         <span id="status-badge" class="badge">连接中...</span>
-        <button id="btn-refresh" class="btn-icon" title="刷新数据">
+        <button id="btn-refresh" class="btn-icon" title="手动刷新">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"></path>
           </svg>
@@ -27,92 +34,314 @@
       </div>
     </header>
 
-    <!-- Key Metrics Grid -->
-    <section class="metrics-grid">
-      <!-- 1. 消耗 Token -->
-      <div class="card metric-card">
-        <div class="card-label">
-          <span>消耗 Token</span>
-          <span class="icon-tag">🪙</span>
-        </div>
-        <div class="card-value" id="val-total-tokens">-</div>
-        <div class="card-sub" id="val-sub-tokens">输入 - · 缓存 - · 输出 -</div>
-      </div>
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-overview">
+        <span>📊 实时概览</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-trend">
+        <span>📈 上下文趋势</span>
+        <span class="tab-badge" id="trend-drops-badge">-</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-files">
+        <span>📁 文件审计</span>
+        <span class="tab-badge" id="files-count-badge">-</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-commands">
+        <span>⚡ 命令审计</span>
+        <span class="tab-badge" id="commands-count-badge">-</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-turns">
+        <span>🕒 轮次明细</span>
+      </button>
+    </nav>
 
-      <!-- 2. Token 速度 -->
-      <div class="card metric-card">
-        <div class="card-label">
-          <span>Token 速度</span>
-          <span class="icon-tag">⚡</span>
+    <!-- Tab 1: 实时概览 (Overview) -->
+    <div id="tab-overview" class="tab-content active">
+      <!-- 4 Key Metrics Grid -->
+      <section class="metrics-grid">
+        <!-- 1. 消耗 Token -->
+        <div class="card metric-card">
+          <div class="card-label">
+            <span>消耗 Token</span>
+            <span class="icon-tag">🪙</span>
+          </div>
+          <div class="card-value" id="val-total-tokens">-</div>
+          <div class="card-sub" id="val-sub-tokens">入 - · 缓 - · 出 -</div>
         </div>
-        <div class="card-value" id="val-speed">-</div>
-        <div class="card-sub" id="val-sub-speed">平均: -</div>
-      </div>
 
-      <!-- 3. 缓存命中率 -->
-      <div class="card metric-card">
-        <div class="card-label">
-          <span>缓存命中率 (会话平均)</span>
-          <span class="icon-tag">🎯</span>
+        <!-- 2. Token 速度 -->
+        <div class="card metric-card">
+          <div class="card-label">
+            <span>Token 速度</span>
+            <span class="icon-tag">⚡</span>
+          </div>
+          <div class="card-value" id="val-speed">-</div>
+          <div class="card-sub" id="val-sub-speed">平均: -</div>
         </div>
-        <div class="card-value highlight-green" id="val-hit-rate">-</div>
-        <div class="progress-wrap">
-          <div class="progress-bar green-bar" id="bar-hit-rate" style="width: 0%"></div>
-        </div>
-        <div class="card-sub" id="val-sub-hit-rate">累计命中率: -</div>
-      </div>
 
-      <!-- 4. 上下文长度与构成 -->
-      <div class="card metric-card">
-        <div class="card-label">
-          <span>上下文长度</span>
-          <span class="icon-tag">📏</span>
+        <!-- 3. 缓存命中率 -->
+        <div class="card metric-card">
+          <div class="card-label">
+            <span>缓存命中率 (全会话)</span>
+            <span class="icon-tag">🎯</span>
+          </div>
+          <div class="card-value highlight-green" id="val-hit-rate">-</div>
+          <div class="progress-wrap">
+            <div class="progress-bar green-bar" id="bar-hit-rate" style="width: 0%"></div>
+          </div>
+          <div class="card-sub" id="val-sub-hit-rate">最新当轮: -</div>
         </div>
-        <div class="card-value" id="val-context">-</div>
-        <!-- 多彩分段进度条 -->
-        <div class="progress-wrap multi-bar" id="bar-context-wrap">
-          <div class="progress-bar purple-bar" id="bar-ctx-tool" style="width: 0%" title="工具与执行结果"></div>
-          <div class="progress-bar blue-bar" id="bar-ctx-system" style="width: 0%" title="系统与环境规则"></div>
-          <div class="progress-bar green-bar" id="bar-ctx-chat" style="width: 0%" title="对话问答文本"></div>
-          <div class="progress-bar amber-bar" id="bar-ctx-summary" style="width: 0%" title="压缩摘要"></div>
+
+        <!-- 4. 预估费用 -->
+        <div class="card metric-card">
+          <div class="card-label">
+            <span>预估费用 (Cost)</span>
+            <span class="icon-tag">💰</span>
+          </div>
+          <div class="card-value highlight-amber" id="val-cost">-</div>
+          <div class="card-sub" id="val-sub-cost">折合人民币: - · 缓存已省 -</div>
         </div>
-        <div class="card-sub" id="val-sub-context">上限: 1,000,000 (0.0%)</div>
-        <!-- 分类占比明细 Tips -->
-        <div class="ctx-breakdown-tips" id="ctx-breakdown-tips" style="display: none;"></div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Bottom Bar Preview Card -->
-    <section class="card preview-card">
-      <div class="preview-header">
-        <span class="section-title">💬 对话框底栏效果预览</span>
-        <button id="btn-copy" class="btn-sm">复制 Markdown</button>
-      </div>
-      <div class="preview-box" id="bottom-bar-preview">
-        正在获取对话统计...
-      </div>
-    </section>
+      <!-- 6-Category Context Breakdown Card -->
+      <section class="card breakdown-card">
+        <div class="card-header-row">
+          <div class="section-title">
+            <span>📏 上下文构成 (6 维分类)</span>
+          </div>
+          <div class="ctx-summary-badge" id="val-context-summary">
+            <span class="font-bold" id="val-context">-</span>
+            <span class="text-muted" id="val-sub-context">(0.0% / 1M)</span>
+          </div>
+        </div>
 
-    <!-- History Table -->
-    <section class="card history-card">
-      <div class="section-title">🕒 最近轮次详情</div>
-      <div class="table-wrap">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>轮次</th>
-              <th>总消耗</th>
-              <th>输入 / 缓存 / 输出</th>
-              <th>命中率</th>
-              <th>速度</th>
-            </tr>
-          </thead>
-          <tbody id="history-tbody">
-            <tr><td colspan="5" style="text-align:center;color:var(--muted-foreground)">暂无轮次记录</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+        <!-- 6-segment Progress Bar -->
+        <div class="progress-wrap multi-bar-6" id="bar-context-wrap">
+          <div class="progress-bar seg-tool" id="bar-ctx-tool" style="width: 0%" title="工具与执行结果"></div>
+          <div class="progress-bar seg-system" id="bar-ctx-system" style="width: 0%" title="系统与环境规则"></div>
+          <div class="progress-bar seg-thinking" id="bar-ctx-thinking" style="width: 0%" title="深度思考与推理"></div>
+          <div class="progress-bar seg-assistant" id="bar-ctx-assistant" style="width: 0%" title="模型回答输出"></div>
+          <div class="progress-bar seg-user" id="bar-ctx-user" style="width: 0%" title="用户指令"></div>
+          <div class="progress-bar seg-summary" id="bar-ctx-summary" style="width: 0%" title="压缩摘要"></div>
+        </div>
+
+        <!-- 6-Category Legend Grid -->
+        <div class="breakdown-grid" id="ctx-breakdown-grid">
+          <div class="breakdown-chip" id="chip-tool">
+            <span class="dot-tag dot-tool"></span>
+            <span class="chip-name">工具与结果</span>
+            <span class="chip-val" id="chip-val-tool">-</span>
+          </div>
+          <div class="breakdown-chip" id="chip-system">
+            <span class="dot-tag dot-system"></span>
+            <span class="chip-name">系统与规则</span>
+            <span class="chip-val" id="chip-val-system">-</span>
+          </div>
+          <div class="breakdown-chip" id="chip-thinking">
+            <span class="dot-tag dot-thinking"></span>
+            <span class="chip-name">思考推理</span>
+            <span class="chip-val" id="chip-val-thinking">-</span>
+          </div>
+          <div class="breakdown-chip" id="chip-assistant">
+            <span class="dot-tag dot-assistant"></span>
+            <span class="chip-name">模型回答</span>
+            <span class="chip-val" id="chip-val-assistant">-</span>
+          </div>
+          <div class="breakdown-chip" id="chip-user">
+            <span class="dot-tag dot-user"></span>
+            <span class="chip-name">用户指令</span>
+            <span class="chip-val" id="chip-val-user">-</span>
+          </div>
+          <div class="breakdown-chip" id="chip-summary">
+            <span class="dot-tag dot-summary"></span>
+            <span class="chip-name">压缩摘要</span>
+            <span class="chip-val" id="chip-val-summary">-</span>
+          </div>
+        </div>
+
+        <!-- Top Tools & Context Insights -->
+        <div class="breakdown-footer" id="ctx-top-tools-row">
+          <span class="text-muted">主要工具占比:</span>
+          <span class="font-mono text-highlight" id="val-top-tools">-</span>
+        </div>
+      </section>
+
+      <!-- Quick Summary Cards for Files & Commands -->
+      <section class="quick-audit-grid">
+        <div class="card quick-audit-card" id="btn-goto-files">
+          <div class="quick-audit-header">
+            <span class="quick-title">📁 文件操作统计</span>
+            <span class="arrow-link">详情 →</span>
+          </div>
+          <div class="quick-audit-content">
+            <span class="quick-stat-num" id="quick-files-total">-</span> 个文件已访问
+            <div class="quick-stat-sub" id="quick-files-sub">读 - · 写 - · +0 / -0 行</div>
+          </div>
+        </div>
+        <div class="card quick-audit-card" id="btn-goto-commands">
+          <div class="quick-audit-header">
+            <span class="quick-title">⚡ 命令执行统计</span>
+            <span class="arrow-link">详情 →</span>
+          </div>
+          <div class="quick-audit-content">
+            <span class="quick-stat-num" id="quick-cmd-total">-</span> 次命令运行
+            <div class="quick-stat-sub" id="quick-cmd-sub">成功 - · 错误 -</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Bar Preview Card -->
+      <section class="card preview-card">
+        <div class="preview-header">
+          <span class="section-title">💬 对话框底栏效果预览</span>
+          <button id="btn-copy" class="btn-sm">复制 Markdown</button>
+        </div>
+        <div class="preview-box" id="bottom-bar-preview">
+          正在获取对话统计...
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab 2: 上下文趋势 (Trend) -->
+    <div id="tab-trend" class="tab-content">
+      <section class="card trend-summary-bar">
+        <div class="trend-kpi">
+          <span class="trend-kpi-label">峰值上下文</span>
+          <span class="trend-kpi-val" id="trend-peak-val">-</span>
+        </div>
+        <div class="trend-kpi">
+          <span class="trend-kpi-label">当前上下文</span>
+          <span class="trend-kpi-val" id="trend-current-val">-</span>
+        </div>
+        <div class="trend-kpi">
+          <span class="trend-kpi-label">谷底上下文</span>
+          <span class="trend-kpi-val" id="trend-min-val">-</span>
+        </div>
+        <div class="trend-kpi">
+          <span class="trend-kpi-label">压缩截断</span>
+          <span class="trend-kpi-val highlight-amber" id="trend-drops-val">- 次</span>
+        </div>
+      </section>
+
+      <section class="card chart-card">
+        <div class="chart-header">
+          <div class="section-title">📈 上下文容量走势 (每轮 Token & 压缩释放点)</div>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#89b4fa"></span> 上下文 Token</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#fab387"></span> 📦 压缩截断点</span>
+          </div>
+        </div>
+        <!-- Interactive SVG Chart Container -->
+        <div class="chart-container" id="trend-chart-container">
+          <svg id="trend-svg" class="trend-svg" viewBox="0 0 500 200" preserveAspectRatio="none"></svg>
+          <div id="chart-tooltip" class="chart-tooltip" style="display: none;"></div>
+        </div>
+        <div class="chart-footer-note">
+          💡 提示: 鼠标悬浮在图表曲线上可查看各轮次精确上下文 Token 数；折线大幅下降处即为 Billion-Context 历史压缩生效时刻。
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab 3: 文件审计 (Files) -->
+    <div id="tab-files" class="tab-content">
+      <section class="card files-summary-bar">
+        <div class="stat-badge-group">
+          <span class="stat-pill">涉及文件: <b id="files-stat-total">0</b></span>
+          <span class="stat-pill">读取: <b id="files-stat-reads">0</b></span>
+          <span class="stat-pill">修改: <b id="files-stat-writes">0</b></span>
+          <span class="stat-pill highlight-green">新增: <b id="files-stat-added">+0</b> 行</span>
+          <span class="stat-pill highlight-red">删除: <b id="files-stat-deleted">-0</b> 行</span>
+        </div>
+      </section>
+
+      <section class="card files-list-card">
+        <div class="table-toolbar">
+          <input type="text" id="files-search" class="search-input" placeholder="搜索文件路径或名称...">
+          <div class="filter-btn-group">
+            <button class="filter-btn active" data-file-filter="all">全部</button>
+            <button class="filter-btn" data-file-filter="writes">已修改</button>
+            <button class="filter-btn" data-file-filter="reads">仅读取</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>文件</th>
+                <th style="width: 70px;">操作</th>
+                <th style="width: 90px;">代码增减</th>
+                <th style="width: 60px;">最近轮次</th>
+              </tr>
+            </thead>
+            <tbody id="files-tbody">
+              <tr><td colspan="4" class="empty-state">暂无文件活动记录</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab 4: 命令审计 (Commands) -->
+    <div id="tab-commands" class="tab-content">
+      <!-- Program distribution chips -->
+      <section class="card prog-chips-card">
+        <div class="section-title-sm">程序分布 (点击过滤):</div>
+        <div class="prog-chips-wrap" id="prog-chips-wrap">
+          <!-- chips inserted by js -->
+        </div>
+      </section>
+
+      <section class="card commands-list-card">
+        <div class="table-toolbar">
+          <input type="text" id="cmd-search" class="search-input" placeholder="搜索执行命令内容或参数...">
+          <div class="filter-btn-group">
+            <button class="filter-btn active" data-cmd-filter="all">全部</button>
+            <button class="filter-btn" data-cmd-filter="success">成功 (OK)</button>
+            <button class="filter-btn" data-cmd-filter="error">错误 (ERR)</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">状态</th>
+                <th style="width: 70px;">程序</th>
+                <th>命令行</th>
+                <th style="width: 60px;">耗时</th>
+                <th style="width: 50px;">轮次</th>
+              </tr>
+            </thead>
+            <tbody id="cmd-tbody">
+              <tr><td colspan="5" class="empty-state">暂无命令执行记录</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab 5: 轮次明细 (Turns) -->
+    <div id="tab-turns" class="tab-content">
+      <section class="card history-card">
+        <div class="section-title">🕒 最近模型交互轮次详情</div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>轮次</th>
+                <th>消耗</th>
+                <th>输入 / 缓存 / 输出</th>
+                <th>命中率</th>
+                <th>速度</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr><td colspan="5" class="empty-state">暂无轮次记录</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </div>
 
   <div id="toast" class="toast" hidden></div>
