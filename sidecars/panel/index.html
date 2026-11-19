@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Token 实时监控</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/preload.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-title">
+        <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 6v6l4 2"></path>
+        </svg>
+        <span>Token & 上下文监控</span>
+      </div>
+      <div class="header-actions">
+        <span id="status-badge" class="badge">连接中...</span>
+        <button id="btn-refresh" class="btn-icon" title="刷新数据">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Key Metrics Grid -->
+    <section class="metrics-grid">
+      <!-- 1. 消耗 Token -->
+      <div class="card metric-card">
+        <div class="card-label">
+          <span>消耗 Token</span>
+          <span class="icon-tag">🪙</span>
+        </div>
+        <div class="card-value" id="val-total-tokens">-</div>
+        <div class="card-sub" id="val-sub-tokens">输入 - · 缓存 - · 输出 -</div>
+      </div>
+
+      <!-- 2. Token 速度 -->
+      <div class="card metric-card">
+        <div class="card-label">
+          <span>Token 速度</span>
+          <span class="icon-tag">⚡</span>
+        </div>
+        <div class="card-value" id="val-speed">-</div>
+        <div class="card-sub" id="val-sub-speed">平均: -</div>
+      </div>
+
+      <!-- 3. 缓存命中率 -->
+      <div class="card metric-card">
+        <div class="card-label">
+          <span>缓存命中率 (会话平均)</span>
+          <span class="icon-tag">🎯</span>
+        </div>
+        <div class="card-value highlight-green" id="val-hit-rate">-</div>
+        <div class="progress-wrap">
+          <div class="progress-bar green-bar" id="bar-hit-rate" style="width: 0%"></div>
+        </div>
+        <div class="card-sub" id="val-sub-hit-rate">累计命中率: -</div>
+      </div>
+
+      <!-- 4. 上下文长度与构成 -->
+      <div class="card metric-card">
+        <div class="card-label">
+          <span>上下文长度</span>
+          <span class="icon-tag">📏</span>
+        </div>
+        <div class="card-value" id="val-context">-</div>
+        <!-- 多彩分段进度条 -->
+        <div class="progress-wrap multi-bar" id="bar-context-wrap">
+          <div class="progress-bar purple-bar" id="bar-ctx-tool" style="width: 0%" title="工具与执行结果"></div>
+          <div class="progress-bar blue-bar" id="bar-ctx-system" style="width: 0%" title="系统与环境规则"></div>
+          <div class="progress-bar green-bar" id="bar-ctx-chat" style="width: 0%" title="对话问答文本"></div>
+          <div class="progress-bar amber-bar" id="bar-ctx-summary" style="width: 0%" title="压缩摘要"></div>
+        </div>
+        <div class="card-sub" id="val-sub-context">上限: 1,000,000 (0.0%)</div>
+        <!-- 分类占比明细 Tips -->
+        <div class="ctx-breakdown-tips" id="ctx-breakdown-tips" style="display: none;"></div>
+      </div>
+    </section>
+
+    <!-- Bottom Bar Preview Card -->
+    <section class="card preview-card">
+      <div class="preview-header">
+        <span class="section-title">💬 对话框底栏效果预览</span>
+        <button id="btn-copy" class="btn-sm">复制 Markdown</button>
+      </div>
+      <div class="preview-box" id="bottom-bar-preview">
+        正在获取对话统计...
+      </div>
+    </section>
+
+    <!-- History Table -->
+    <section class="card history-card">
+      <div class="section-title">🕒 最近轮次详情</div>
+      <div class="table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>轮次</th>
+              <th>总消耗</th>
+              <th>输入 / 缓存 / 输出</th>
+              <th>命中率</th>
+              <th>速度</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="5" style="text-align:center;color:var(--muted-foreground)">暂无轮次记录</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

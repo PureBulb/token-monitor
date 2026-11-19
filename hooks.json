@@ -1,0 +1,11 @@
+{
+  "token-stats-tracker": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node scripts/token_tracker.mjs",
+        "timeout": 5
+      }
+    ]
+  }
+}

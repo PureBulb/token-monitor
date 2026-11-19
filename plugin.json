@@ -1,0 +1,12 @@
+{
+  "name": "token-monitor",
+  "displayName": "Token & 上下文实时监控",
+  "description": "在对话框底部自动显示消耗 Token、Token 速度、缓存命中率及上下文长度，并提供实时侧边栏监控面板。",
+  "version": "1.0.0",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "显示当前会话的 Token 消耗和缓存命中率",
+    "打开 Token 实时监控面板",
+    "分析本会话的上下文长度与生成速度"
+  ]
+}
