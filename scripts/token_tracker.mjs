@@ -14,17 +14,35 @@ import os from 'node:os';
 import path from 'node:path';
 
 const PRICING_PROFILES = {
-  'gemini-1.5-pro': {
-    name: 'Gemini 1.5 Pro',
-    inputPerM: 3.50,
-    cachePerM: 0.875,
-    outputPerM: 10.50,
+  'gemini-4-neon': {
+    name: 'Gemini 4 Neon (主力编码)',
+    inputPerM: 3.00,
+    cachePerM: 0.15, // 95% discount on repeated context
+    outputPerM: 15.00,
   },
-  'gemini-1.5-flash': {
-    name: 'Gemini 1.5 Flash',
-    inputPerM: 0.075,
-    cachePerM: 0.01875,
-    outputPerM: 0.30,
+  'gemini-4-carbon': {
+    name: 'Gemini 4 Carbon (深度推理)',
+    inputPerM: 2.00,
+    cachePerM: 0.10,
+    outputPerM: 10.00,
+  },
+  'gemini-4-argon': {
+    name: 'Gemini 4 Argon (长程推理)',
+    inputPerM: 2.00,
+    cachePerM: 0.10,
+    outputPerM: 10.00,
+  },
+  'gemini-4-hydrogen': {
+    name: 'Gemini 4 Hydrogen (日常极速)',
+    inputPerM: 1.50,
+    cachePerM: 0.075,
+    outputPerM: 7.50,
+  },
+  'gemini-3.8-flash': {
+    name: 'Gemini 3.8 Flash (轻量极速)',
+    inputPerM: 0.75,
+    cachePerM: 0.075,
+    outputPerM: 3.75,
   },
 };
 const USD_TO_CNY = 7.25;
@@ -375,7 +393,7 @@ async function main() {
     const contextPct = ((currentContext / contextLimit) * 100).toFixed(1) + '%';
 
     const breakdown = calculateContextBreakdown6(steps, currentContext);
-    const cost = calculateCost(totalInput, totalCache, totalOutput, 'gemini-1.5-pro');
+    const cost = calculateCost(totalInput, totalCache, totalOutput, 'gemini-4-neon');
 
     const statsObj = {
       totalFormatted: formatK(grandTotal),

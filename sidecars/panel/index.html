@@ -20,10 +20,11 @@
       <div class="header-actions">
         <!-- Model preset selector -->
         <select id="model-select" class="select-sm" title="切换计费基准模型">
-          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-          <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+          <option value="gemini-4-neon" selected>Gemini 4 Neon (主力编码)</option>
+          <option value="gemini-4-carbon">Gemini 4 Carbon (深度推理)</option>
+          <option value="gemini-4-argon">Gemini 4 Argon (长程推理)</option>
+          <option value="gemini-4-hydrogen">Gemini 4 Hydrogen (日常极速)</option>
+          <option value="gemini-3.8-flash">Gemini 3.8 Flash (轻量极速)</option>
         </select>
         <span id="status-badge" class="badge">连接中...</span>
         <button id="btn-refresh" class="btn-icon" title="手动刷新">

@@ -2,9 +2,9 @@ const sidecar = window.sidecar;
 const $ = (id) => document.getElementById(id);
 
 let currentPreviewMarkdown = '';
-let activeTab = 'tab-overview';
-let selectedModel = localStorage.getItem('tm_model') || 'gemini-1.5-pro';
-let currentStatsData = null;
+const VALID_MODELS = ['gemini-4-neon', 'gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen', 'gemini-3.8-flash'];
+let savedModel = localStorage.getItem('tm_model');
+let selectedModel = VALID_MODELS.includes(savedModel) ? savedModel : 'gemini-4-neon';
 
 let fileFilterMode = 'all';
 let fileSearchQuery = '';
