@@ -403,7 +403,9 @@ function init() {
   $('btn-goto-commands')?.addEventListener('click', () => switchTab('tab-commands'));
 
   // Refresh & Copy
-  $('btn-refresh').addEventListener('click', fetchStats);
+  $('btn-refresh').addEventListener('click', () => {
+    window.location.reload();
+  });
   $('btn-copy').addEventListener('click', () => {
     if (!currentPreviewMarkdown) return;
     navigator.clipboard.writeText(currentPreviewMarkdown).then(() => {
