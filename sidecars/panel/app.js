@@ -442,7 +442,29 @@ function init() {
   });
 
   fetchStats();
-  setInterval(fetchStats, 2500);
+
+  // Intelligent adaptive polling: Throttle to 30s when tab is hidden, 2.5s when active
+  let pollTimer = null;
+  function schedulePoll(delay = 2500) {
+    if (pollTimer) clearTimeout(pollTimer);
+    pollTimer = setTimeout(async () => {
+      if (!document.hidden) {
+        await fetchStats();
+        schedulePoll(2500);
+      } else {
+        schedulePoll(30000);
+      }
+    }, delay);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      fetchStats();
+      schedulePoll(2500);
+    }
+  });
+
+  schedulePoll(2500);
 }
 
 init();

@@ -1,6 +1,9 @@
 {
   "command": "node",
-  "args": ["main.mjs"],
+  "args": ["--max-old-space-size=32", "--optimize-for-size", "main.mjs"],
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=32 --optimize-for-size"
+  },
   "restart_policy": "always",
   "display_name": "Token 实时监控",
   "description": "实时监控消耗 Token、生成速度、缓存命中率及上下文长度",

@@ -303,6 +303,14 @@ function analyzeTranscript(steps, plannerSteps) {
   };
 }
 
+let statsCache = {
+  transcriptPath: null,
+  mtimeMs: 0,
+  size: 0,
+  modelKey: null,
+  result: null,
+};
+
 // API: Get live statistics and full dsh-context feature suite
 app.api('/api/stats', (query) => {
   const convId = query?.conversationId;
@@ -322,6 +330,17 @@ app.api('/api/stats', (query) => {
   }
 
   try {
+    const stat = statSync(transcriptPath);
+    if (
+      statsCache.result &&
+      statsCache.transcriptPath === transcriptPath &&
+      statsCache.mtimeMs === stat.mtimeMs &&
+      statsCache.size === stat.size &&
+      statsCache.modelKey === modelKey
+    ) {
+      return statsCache.result;
+    }
+
     const raw = readFileSync(transcriptPath, 'utf8');
     const lines = raw.split('\n').filter(Boolean);
     const steps = [];
@@ -474,7 +493,7 @@ app.api('/api/stats', (query) => {
       totalSteps: trends.length,
     };
 
-    return {
+    const payload = {
       connected: true,
       transcriptPath,
       availableModels: Object.entries(PRICING_PROFILES).map(([k, v]) => ({ key: k, name: v.name })),
@@ -505,6 +524,16 @@ app.api('/api/stats', (query) => {
       commands: analysis.commands.slice(0, 100), // Latest 100 commands
       steps: formattedSteps.slice(-25).reverse(), // Last 25 planner steps
     };
+
+    statsCache = {
+      transcriptPath,
+      mtimeMs: stat.mtimeMs,
+      size: stat.size,
+      modelKey,
+      result: payload,
+    };
+
+    return payload;
   } catch (err) {
     return {
       connected: false,
