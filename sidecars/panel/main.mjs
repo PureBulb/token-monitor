@@ -48,7 +48,10 @@ const readLocal = (name) => readFileSync(join(HERE, name), 'utf8');
 
 // Pages & Assets
 app.page('/', () => readLocal('index.html'));
-app.page('/app.js', () => readLocal('app.js'));
+app.api('/app.js', () => new Response(readLocal('app.js'), {
+  contentType: 'application/javascript',
+  headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+}), 'GET');
 app.api('/styles.css', () => new Response(readLocal('styles.css'), { contentType: 'text/css' }), 'GET');
 
 function findTranscriptFile(convId) {
@@ -303,13 +306,7 @@ function analyzeTranscript(steps, plannerSteps) {
   };
 }
 
-let statsCache = {
-  transcriptPath: null,
-  mtimeMs: 0,
-  size: 0,
-  modelKey: null,
-  result: null,
-};
+const statsCache = new Map();
 
 // API: Get live statistics and full dsh-context feature suite
 app.api('/api/stats', (query) => {
@@ -331,14 +328,14 @@ app.api('/api/stats', (query) => {
 
   try {
     const stat = statSync(transcriptPath);
+    const cached = statsCache.get(transcriptPath);
     if (
-      statsCache.result &&
-      statsCache.transcriptPath === transcriptPath &&
-      statsCache.mtimeMs === stat.mtimeMs &&
-      statsCache.size === stat.size &&
-      statsCache.modelKey === modelKey
+      cached &&
+      cached.mtimeMs === stat.mtimeMs &&
+      cached.size === stat.size &&
+      cached.modelKey === modelKey
     ) {
-      return statsCache.result;
+      return cached.result;
     }
 
     const raw = readFileSync(transcriptPath, 'utf8');
@@ -525,13 +522,12 @@ app.api('/api/stats', (query) => {
       steps: formattedSteps.slice(-25).reverse(), // Last 25 planner steps
     };
 
-    statsCache = {
-      transcriptPath,
+    statsCache.set(transcriptPath, {
       mtimeMs: stat.mtimeMs,
       size: stat.size,
       modelKey,
       result: payload,
-    };
+    });
 
     return payload;
   } catch (err) {

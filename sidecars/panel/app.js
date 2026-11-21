@@ -25,6 +25,31 @@ function formatDuration(ms) {
   return `${ms}ms`;
 }
 
+function formatLocalTime(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return String(isoStr).slice(11, 19);
+    return d.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch (_) {
+    return String(isoStr).slice(11, 19);
+  }
+}
+
+function formatLocalDateTime(isoStr) {
+  if (!isoStr) return '';
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return String(isoStr);
+    const M = String(d.getMonth() + 1).padStart(2, '0');
+    const D = String(d.getDate()).padStart(2, '0');
+    const t = d.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${M}-${D} ${t}`;
+  } catch (_) {
+    return String(isoStr);
+  }
+}
+
 function showToast(msg) {
   const el = $('toast');
   el.textContent = msg;
@@ -48,8 +73,11 @@ function switchTab(tabId) {
 
 // Fetch Stats API
 async function fetchStats() {
-  const convId = sidecar?.conversationId || '';
-  const url = `/api/stats?${convId ? 'conversationId=' + encodeURIComponent(convId) + '&' : ''}model=${encodeURIComponent(selectedModel)}`;
+  const urlParams = new URLSearchParams(window.location.search);
+  const convId = urlParams.get('conversationId') || sidecar?.conversationId || '';
+  const query = new URLSearchParams({ model: selectedModel });
+  if (convId) query.set('conversationId', convId);
+  const url = `/api/stats?${query.toString()}`;
 
   try {
     const res = await (sidecar ? sidecar.fetch(url) : fetch(url));
@@ -237,7 +265,7 @@ function renderTrendChart(trends, trendStats) {
 
     const t = pt.trend;
     const deltaText = t.delta > 0 ? `+${formatNumber(t.delta)}` : (t.delta < 0 ? `-${formatNumber(Math.abs(t.delta))}` : '0');
-    const timeStr = t.time ? new Date(t.time).toLocaleTimeString() : '';
+    const timeStr = formatLocalDateTime(t.time);
 
     tooltip.style.display = 'block';
     tooltip.style.left = `${(pt.x * rect.width / width)}px`;
